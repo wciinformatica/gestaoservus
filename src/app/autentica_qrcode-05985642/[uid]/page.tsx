@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 
 interface Props {
-  params: { uid: string };
+  params: Promise<{ uid: string }>;
 }
 
 function formatarData(data: string | null | undefined): string {
@@ -29,7 +29,7 @@ function labelTipoCadastro(tipo: string): string {
 }
 
 export default async function CredencialPage({ params }: Props) {
-  const { uid } = params;
+  const { uid } = await params;
 
   if (!uid || uid.trim().length < 8) {
     notFound();

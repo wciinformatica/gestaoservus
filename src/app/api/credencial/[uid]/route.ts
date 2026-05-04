@@ -3,9 +3,9 @@ import { createServerClient } from '@/lib/supabase-server';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { uid: string } }
+  { params }: { params: Promise<{ uid: string }> }
 ) {
-  const { uid } = params;
+  const { uid } = await params;
 
   if (!uid || uid.trim().length < 8) {
     return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
