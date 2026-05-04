@@ -262,17 +262,22 @@ export default function CartãoMembro({ membro, onClose }: CartãoMembroProps) {
           </div>
         );
       }
-      case 'qrcode':
+      case 'qrcode': {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+        const qrValue = (membro.uniqueId || membro.id)
+          ? `${appUrl}/autentica_qrcode-05985642/${membro.uniqueId || membro.id}`
+          : (membro.uniqueId || membro.id);
         return (
           <div key={elemento.id} style={estilo}>
             <QRCode
-              value={membro.uniqueId || membro.id}
+              value={qrValue}
               size={Math.min(elemento.largura, elemento.altura)}
               level="H"
               includeMargin={false}
             />
           </div>
         );
+      }
 
       case 'imagem': {
         const styleContainer: React.CSSProperties = {

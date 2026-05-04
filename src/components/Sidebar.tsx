@@ -35,7 +35,6 @@ export default function Sidebar({ activeMenu, setActiveMenu }: SidebarProps) {
     },
     { id: 'financeiro', label: 'Financeiro', icon: '💳', path: '/financeiro' },
     { id: 'eventos', label: 'Eventos', icon: '📅', path: '/eventos' },
-    { id: 'presidencia', label: 'Presidência', icon: '👑', path: '/presidencia' },
     { id: 'reunioes', label: 'Reuniões', icon: '🤝', path: '/reunioes' },
     { id: 'comissao', label: 'Comissão', icon: '👥', path: '/comissao' },
     { id: 'patrimonio', label: 'Patrimônio', icon: '🏢', path: '/patrimonio' },
@@ -52,7 +51,6 @@ export default function Sidebar({ activeMenu, setActiveMenu }: SidebarProps) {
         { id: 'config-geral', label: 'Geral', icon: '⚙️', path: '/configuracoes' },
         { id: 'config-certificados', label: 'Certificados', icon: '🎓', path: '/configuracoes/certificados' },
         { id: 'config-cartoes', label: 'Cartões', icon: '🎫', path: '/configuracoes/cartoes' },
-        { id: 'ativar-fluxo', label: 'Ativar Fluxo', icon: '🔄', path: '/secretaria/ativar-fluxo' },
       ]
     },
   ];

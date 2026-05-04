@@ -19,6 +19,8 @@ export default function DashboardPage() {
     nivel: string;
   } | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [stats, setStats] = useState({ ministros: 0, ativos: 0, inativos: 0, homologacao: 0 });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     const run = async () => {
@@ -30,10 +32,10 @@ export default function DashboardPage() {
           return;
         }
 
-        // Tentar buscar role do usuário no ministério (quando existir)
+        // Busca role e ministry_id do usuário
         const { data: mu } = await supabase
           .from('ministry_users')
-          .select('role')
+          .select('role, ministry_id')
           .eq('user_id', data.user.id)
           .maybeSingle();
 
@@ -44,8 +46,31 @@ export default function DashboardPage() {
           email: data.user.email || '',
           nivel,
         });
+
+        // Busca contagens para os cards de stats (todos filtrados por tipo_cadastro=ministro)
+        if (mu?.ministry_id) {
+          const mid = mu.ministry_id;
+          const [
+            { count: ministros },
+            { count: ativos },
+            { count: inativos },
+            { count: homologacao },
+          ] = await Promise.all([
+            supabase.from('members').select('*', { count: 'exact', head: true }).eq('ministry_id', mid).eq('tipo_cadastro', 'ministro'),
+            supabase.from('members').select('*', { count: 'exact', head: true }).eq('ministry_id', mid).eq('tipo_cadastro', 'ministro').eq('status', 'active'),
+            supabase.from('members').select('*', { count: 'exact', head: true }).eq('ministry_id', mid).eq('tipo_cadastro', 'ministro').eq('status', 'inactive'),
+            supabase.from('consagracao_registros').select('*', { count: 'exact', head: true }).eq('ministry_id', mid).eq('status_processo', 'homologar'),
+          ]);
+          setStats({
+            ministros: ministros ?? 0,
+            ativos: ativos ?? 0,
+            inativos: inativos ?? 0,
+            homologacao: homologacao ?? 0,
+          });
+        }
       } finally {
         setAuthLoading(false);
+        setStatsLoading(false);
       }
     };
 
@@ -141,6 +166,80 @@ export default function DashboardPage() {
                 </button>
               </div>
             )}
+          </div>
+
+          {/* STATS CARDS — 4 indicadores principais */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {/* Total de Ministros */}
+            <div className="rounded-2xl p-5 shadow-md transition hover:shadow-lg hover:scale-[1.02] cursor-default" style={{ background: '#3b82f6' }}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-white/80 text-sm font-medium">Total de Ministros</p>
+                  <p className="text-white text-4xl font-bold mt-2">
+                    {statsLoading ? <span className="text-white/40 text-2xl">…</span> : stats.ministros}
+                  </p>
+                </div>
+                <svg className="w-10 h-10 text-white/30" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* Ministros Ativos */}
+            <div className="rounded-2xl p-5 shadow-md transition hover:shadow-lg hover:scale-[1.02] cursor-default" style={{ background: '#22c55e' }}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-white/80 text-sm font-medium">Ministros Ativos</p>
+                  <p className="text-white text-4xl font-bold mt-2">
+                    {statsLoading ? <span className="text-white/40 text-2xl">…</span> : stats.ativos}
+                  </p>
+                  {!statsLoading && stats.ministros > 0 && (
+                    <p className="text-white/70 text-xs mt-1">
+                      {((stats.ativos / stats.ministros) * 100).toFixed(1)}% do total
+                    </p>
+                  )}
+                </div>
+                <svg className="w-10 h-10 text-white/30" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Ministros Inativos */}
+            <div className="rounded-2xl p-5 shadow-md transition hover:shadow-lg hover:scale-[1.02] cursor-default" style={{ background: '#f97316' }}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-white/80 text-sm font-medium">Ministros Inativos</p>
+                  <p className="text-white text-4xl font-bold mt-2">
+                    {statsLoading ? <span className="text-white/40 text-2xl">…</span> : stats.inativos}
+                  </p>
+                  {!statsLoading && stats.ministros > 0 && (
+                    <p className="text-white/70 text-xs mt-1">
+                      {((stats.inativos / stats.ministros) * 100).toFixed(1)}% do total
+                    </p>
+                  )}
+                </div>
+                <svg className="w-10 h-10 text-white/30" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                </svg>
+              </div>
+            </div>
+
+            {/* Homologação */}
+            <div className="rounded-2xl p-5 shadow-md transition hover:shadow-lg hover:scale-[1.02] cursor-default" style={{ background: '#a855f7' }}>
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-white/80 text-sm font-medium">Homologação</p>
+                  <p className="text-white text-4xl font-bold mt-2">
+                    {statsLoading ? <span className="text-white/40 text-2xl">…</span> : stats.homologacao}
+                  </p>
+                  <p className="text-white/70 text-xs mt-1">Aguardando</p>
+                </div>
+                <svg className="w-10 h-10 text-white/30" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                </svg>
+              </div>
+            </div>
           </div>
 
           {/* STATS CARDS */}
